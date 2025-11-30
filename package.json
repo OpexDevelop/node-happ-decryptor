@@ -1,0 +1,24 @@
+{
+  "name": "node-happ-decryptor",
+  "version": "1.0.0",
+  "description": "Happ link encryption and decryption module",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpexDevelop/node-happ-decryptor.git"
+  },
+  "author": "t.me/OpexDev",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/OpexDevelop/node-happ-decryptor/issues"
+  },
+  "homepage": "https://github.com/OpexDevelop/node-happ-decryptor",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {}
+}
