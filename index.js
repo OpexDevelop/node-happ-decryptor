@@ -39,13 +39,15 @@ export default class HappProcessor {
 
         const [, version, encryptedB64] = match;
         const encryptedBuffer = Buffer.from(encryptedB64, 'base64');
-
         const versionsToTry = new Set([version, ...FALLBACK_ORDER]);
+        
+        const errors = [];
 
         for (const keyVersion of versionsToTry) {
             const privateKey = this.privateKeys[keyVersion];
             if (!privateKey) continue;
 
+            // ПОПЫТКА 1: Стандартная
             try {
                 const decryptedBuffer = crypto.privateDecrypt(
                     {
@@ -54,18 +56,54 @@ export default class HappProcessor {
                     },
                     encryptedBuffer
                 );
-
-                return {
-                    version: version,
-                    usedKey: keyVersion,
-                    decryptedData: decryptedBuffer.toString('utf8')
-                };
+                
+                return this._successResult(version, keyVersion, decryptedBuffer);
             } catch (err) {
+                // Игнорируем ошибку и молча идем пробовать ручной метод.
+                // Если ключ был неверный, ручной метод тоже упадет, это нормально.
+            }
+
+            // ПОПЫТКА 2: Fallback (Ручной режим через NO_PADDING)
+            try {
+                const rawDecrypted = crypto.privateDecrypt(
+                    {
+                        key: privateKey,
+                        padding: crypto.constants.RSA_NO_PADDING 
+                    },
+                    encryptedBuffer
+                );
+
+                let separatorIndex = -1;
+                // Ищем разделитель 0x00. Данные RSA PKCS#1 v1.5 всегда начинаются с 00 02 ... 00
+                for (let i = 2; i < rawDecrypted.length; i++) {
+                    if (rawDecrypted[i] === 0x00) {
+                        separatorIndex = i;
+                        break;
+                    }
+                }
+
+                if (separatorIndex === -1) {
+                    throw new Error('Manual decrypt: Invalid padding structure');
+                }
+
+                const dataBuffer = rawDecrypted.subarray(separatorIndex + 1);
+                return this._successResult(version, keyVersion, dataBuffer);
+
+            } catch (err) {
+                errors.push(`[Key: ${keyVersion}] Failed both methods. Last error: ${err.message}`);
                 continue;
             }
         }
 
-        throw new Error('none of the keys could decrypt the data');
+        throw new Error(`Decryption failed. Details:\n${errors.join('\n')}`);
+    }
+
+    _successResult(version, usedKey, buffer) {
+        return {
+            version: version,
+            usedKey: usedKey,
+            decryptedData: buffer.toString('utf8')
+        };
     }
 
     encrypt(data, version) {
@@ -99,3 +137,4 @@ export default class HappProcessor {
         }
     }
 }
+
