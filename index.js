@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
-const LINK_REGEX = /^happ:\/\/(crypt|crypt2|crypt3)\/(.+)$/;
-const FALLBACK_ORDER = ['crypt', 'crypt2', 'crypt3'];
+const LINK_REGEX = /^happ:\/\/(crypt|crypt2|crypt3|crypt4)\/(.+)$/;
+const FALLBACK_ORDER = ['crypt', 'crypt2', 'crypt3', 'crypt4'];
 
 export default class HappProcessor {
     constructor(privateKeys = {}, publicKeys = {}) {
